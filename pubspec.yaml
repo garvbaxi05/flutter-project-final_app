@@ -1,0 +1,60 @@
+name: secure_vault
+description: A high-security vault app with panic disguise features
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 🌐 Networking
+  http: ^1.1.0
+
+  # 📍 Location & Permissions
+  geolocator: ^10.1.0
+  permission_handler: ^11.3.0
+
+  # 🎨 UI
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.5.0
+  lucide_icons: ^0.257.0
+
+  # 🧠 State Management
+  provider: ^6.1.2
+
+  # 🔐 Security & Encryption
+  flutter_secure_storage: ^9.0.0
+  encrypt: ^5.0.3
+  crypto: ^3.0.3
+
+  # 💾 Local Storage
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+
+  # 📁 File Handling
+  photo_manager: ^3.0.0
+  file_picker: ^8.1.2
+  image_picker: ^1.0.5
+  path: ^1.8.3
+
+  # 🖼 Media
+  photo_view: ^0.14.0
+  video_player: ^2.8.1
+
+  # 📄 PDF Viewer
+  pdfx: ^2.6.0
+
+  # Speed Dial
+  flutter_speed_dial: ^7.0.0
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
