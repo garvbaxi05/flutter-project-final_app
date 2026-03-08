@@ -176,62 +176,91 @@ class _RealVaultScreenState extends State<RealVaultScreen>
 
     // ── Confirm dialog ─────────────────────────────────────────────────────────
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Row(children: [
-          Icon(Icons.lock_outline, color: Colors.blue),
-          SizedBox(width: 12),
-          Text('Encrypt & Move to Vault?'),
-        ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(file.name,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text('${(file.size / 1024).toStringAsFixed(2)} KB',
-                style: const TextStyle(
-                    color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.25)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.warning_amber_rounded,
-                      size: 16, color: Colors.red),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'The original file will be permanently deleted '
-                          'and an encrypted copy saved to the vault.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+
+      title: Row(
+       children: const [
+         Icon(Icons.lock_outline, color: Colors.blue),
+         SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Encrypt & Move to Vault?',
+              style: TextStyle(fontSize: 20),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Encrypt & Move')),
+          ),
         ],
       ),
-    );
+
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+          Text(
+            file.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            '${(file.size / 1024).toStringAsFixed(2)} KB',
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 13,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.red.withValues(alpha: 0.25),
+              ),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    size: 16, color: Colors.red),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'The original file will be permanently deleted and an encrypted copy saved to the vault.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Encrypt & Move'),
+        ),
+      ],
+    ),
+  );
 
     if (confirmed != true) return;
 
@@ -1117,11 +1146,12 @@ void _addWebsite() {
         floatingActionButton: SpeedDial(
           icon: Icons.add,
           activeIcon: Icons.close,
+          elevation: 6,
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Colors.white,
-          spacing: 12,
-          spaceBetweenChildren: 12,
-          overlayOpacity: 0.2,
+          spacing: 14,
+          spaceBetweenChildren: 14,
+          overlayOpacity: 0.25,
           children: [
 
             SpeedDialChild(
