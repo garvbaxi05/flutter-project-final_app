@@ -337,7 +337,10 @@ class _SetupScreenState extends State<SetupScreen>
         ],
 
         const SizedBox(height: 16),
-        _warningBox(),
+        if (vaultPinCtrl.text.length == 4 &&
+            panicPinCtrl.text.length == 4 &&
+            vaultPinCtrl.text == panicPinCtrl.text)
+          _warningBox(),
       ],
     );
   }
@@ -367,6 +370,7 @@ class _SetupScreenState extends State<SetupScreen>
           decoration: const InputDecoration(
             counterText: '',
             hintText: "••••",
+            hintStyle: TextStyle(color: Colors.white38),
           ),
         ),
       ],
@@ -375,15 +379,20 @@ class _SetupScreenState extends State<SetupScreen>
 
   Widget _warningBox() {
     return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 55),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.orange.withOpacity(0.3)),
       ),
-      child: const Text(
-        "PINs must be different.\nThey cannot be recovered.",
-        style: TextStyle(fontSize: 12),
+      child: const Center(
+        child: Text(
+          "PINs must be different. They cannot be recovered.",
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, height: 1.35),
+        ),
       ),
     );
   }
