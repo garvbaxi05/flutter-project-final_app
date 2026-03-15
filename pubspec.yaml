@@ -50,6 +50,7 @@ dependencies:
 
   # Speed Dial
   flutter_speed_dial: ^7.0.0
+  card_scanner: ^1.0.2
   
 dev_dependencies:
   flutter_test:

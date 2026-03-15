@@ -24,23 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _focusNode = FocusNode();
 
   bool _isShaking = false;
-  bool _showShieldIcon = false;
+  // bool _showShieldIcon = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPanicMode();
-  }
-
-  Future<void> _loadPanicMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final mode = prefs.getString('panic_mode');
-
-    if (!mounted) return;
-
-    setState(() {
-      _showShieldIcon = (mode == 'email');
-    });
   }
 
   Future<void> _authenticate() async {
@@ -161,29 +149,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.fromLTRB(24, 36, 24, 0),
               child: Column(
                 children: [
-                  /// TOP ICONS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (_showShieldIcon)
-                        IconButton(
-                          icon: const Icon(Icons.shield_outlined,
-                              color: Colors.white70),
-                          onPressed: _showSettingsDialog,
-                        )
-                      else
-                        const SizedBox(width: 48),
-                      IconButton(
-                        icon: const Icon(Icons.settings_rounded,
-                            color: Colors.white70),
-                        onPressed: _showResetDialog,
-                      ),
-                    ],
-                  ),
-
+                  const SizedBox(height: 18),
                   const SizedBox(height: 30),
 
                   /// TITLE

@@ -13,6 +13,10 @@ import 'package:secure_vault/models/vault_item.dart';
 import 'package:secure_vault/services/encryption_service.dart';
 import 'package:secure_vault/widgets/pdf_preview.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:card_scanner/card_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:secure_vault/screens/dialogs/duress_settings_dialog.dart';
+import 'package:secure_vault/screens/setup_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
@@ -26,6 +30,7 @@ class RealVaultScreen extends StatefulWidget {
 class _RealVaultScreenState extends State<RealVaultScreen>
     with WidgetsBindingObserver {
   bool _isAddingFile = false;
+  bool _showShieldIcon = false;
 
   // ── File type sets ────────────────────────────────────────────────────────────
   static const _imageExts = {
@@ -50,6 +55,47 @@ class _RealVaultScreenState extends State<RealVaultScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     Provider.of<VaultProvider>(context, listen: false).loadVaultItems();
+    _loadPanicMode();
+  }
+
+  Future<void> _loadPanicMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _showShieldIcon = prefs.getString('panic_mode') == 'email';
+    });
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => const DuressSettingsDialog(),
+    );
+  }
+
+  void _showResetDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reset All PINs?'),
+        content: const Text('This will delete all PINs and vault data.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              await authProvider.resetAllPins();
+              if (!mounted) return;
+              Navigator.pop(context);
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const SetupScreen()));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Reset All'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -824,74 +870,180 @@ class _RealVaultScreenState extends State<RealVaultScreen>
 }
 
 void _addCard() {
-
   final name = TextEditingController();
   final number = TextEditingController();
   final expiry = TextEditingController();
   final cvv = TextEditingController();
 
+  Future<void> scanCard() async {
+    try {
+      final card = await CardScanner.scanCard(
+        scanOptions: const CardScanOptions(
+          scanExpiryDate: true,
+          scanCardHolderName: true,
+          enableDebugLogs: false,
+        ),
+      );
+      if (card == null) return;
+
+      if (card.cardNumber.isNotEmpty) number.text = card.cardNumber;
+      if (card.expiryDate.isNotEmpty) expiry.text = card.expiryDate;
+      if (card.cardHolderName.isNotEmpty && name.text.isEmpty) {
+        name.text = card.cardHolderName;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Card scan failed: ${error.toString()}'),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
+
   showDialog(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text("Debit / Credit Card"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-
-          TextField(
-            controller: name,
-            decoration: const InputDecoration(labelText: "Card Name"),
+    builder: (ctx) {
+      final scheme = Theme.of(context).colorScheme;
+      final shell = AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+        title: Row(
+          children: [
+            Icon(Icons.credit_card, color: scheme.primary),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('Add Card', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: [scheme.primary.withOpacity(0.95), scheme.primaryContainer.withOpacity(0.95)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name.text.isNotEmpty ? name.text : 'My Debit Card',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      number.text.isNotEmpty ? number.text : '••••  ••••  ••••  1234',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 18, letterSpacing: 1.2, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('VALID', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                              const SizedBox(height: 2),
+                              Text(expiry.text.isNotEmpty ? expiry.text : 'MM/YY', style: const TextStyle(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text('CVV', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                              SizedBox(height: 2),
+                              Text('•••', style: TextStyle(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: name,
+                decoration: const InputDecoration(labelText: 'Card Name', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: number,
+                decoration: const InputDecoration(labelText: 'Card Number', border: OutlineInputBorder()),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: expiry,
+                      decoration: const InputDecoration(labelText: 'Expiry', border: OutlineInputBorder()),
+                      keyboardType: TextInputType.datetime,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: cvv,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'CVV', border: OutlineInputBorder()),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: scanCard,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Scan Card'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: scheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(45),
+                ),
+              ),
+            ],
           ),
-
-          TextField(
-            controller: number,
-            decoration: const InputDecoration(labelText: "Card Number"),
-            keyboardType: TextInputType.number,
-          ),
-
-          TextField(
-            controller: expiry,
-            decoration: const InputDecoration(labelText: "Expiry"),
-          ),
-
-          TextField(
-            controller: cvv,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: "CVV"),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel")),
-        FilledButton(
-          onPressed: () {
-
-            final data = jsonEncode({
-              "number": number.text,
-              "expiry": expiry.text,
-              "cvv": cvv.text
-            });
-
-            Provider.of<VaultProvider>(context, listen: false)
-                .addItem(
-              VaultItem(
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final data = jsonEncode({
+                'number': number.text,
+                'expiry': expiry.text,
+                'cvv': cvv.text,
+              });
+              Provider.of<VaultProvider>(context, listen: false).addItem(VaultItem(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: name.text,
+                name: name.text.isEmpty ? 'Card ${DateTime.now().millisecondsSinceEpoch}' : name.text,
                 type: 'card',
                 content: data,
                 createdAt: DateTime.now(),
                 size: data.length,
-              ),
-            );
-
-            Navigator.pop(ctx);
-          },
-          child: const Text("Save"),
-        )
-      ],
-    ),
+              ));
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      );
+      return shell;
+    },
   );
 }
 
@@ -985,10 +1137,24 @@ void _addWebsite() {
           automaticallyImplyLeading: false,
           title: const Text('Secure Vault'),
           centerTitle: true,
+          leading: _showShieldIcon
+              ? IconButton(
+                  icon: const Icon(Icons.shield_outlined),
+                  onPressed: _showSettingsDialog,
+                  tooltip: 'Panic settings',
+                )
+              : null,
           actions: [
             IconButton(
-                icon: const Icon(Icons.logout_rounded),
-                onPressed: _logout),
+              icon: const Icon(Icons.settings_rounded),
+              onPressed: _showResetDialog,
+              tooltip: 'Reset PINs',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              onPressed: _logout,
+              tooltip: 'Logout',
+            ),
           ],
         ),
         body: vault.items.isEmpty
